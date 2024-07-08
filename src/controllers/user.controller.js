@@ -235,7 +235,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 const getCurrentUser = asyncHandler(async (req,res) => {
     return res
     .status(200)
-    .json(200, req.user, "current user fetched successfully")
+    .json(new ApiResponse(200, req.user, "current user fetched successfully"))
 })
 //Tip: whenever possible make different endpoint for file updation(files should be updated differently)
 const updateUserDetails = asyncHandler(async (req, res) => {
@@ -251,9 +251,7 @@ const updateUserDetails = asyncHandler(async (req, res) => {
                 email: email
             }
         },
-        {
-            new: true
-        }
+        { new: true }
     ).select("-password")   
 
     return res
