@@ -15,7 +15,7 @@ import fs from "fs"
             const response = await cloudinary.uploader.upload(localFilePath, {
                 resource_type: "auto"
             })
-            // console.log(response);
+            console.log("cloudinary response after uploading image successfully",response);
             fs.unlinkSync(localFilePath)
             console.log("file uploaded successfully on cloudinary", response.url)
             return response
@@ -27,4 +27,17 @@ import fs from "fs"
        };
     }
 
-export {uploadOnCloudinary};
+    const deleteFromCloudinary = async(public_id) => {
+        try {
+            const response = await cloudinary.uploader.destroy(public_id, {
+                resource_type: "auto",
+                invalidate: true
+            })
+            return response
+        } catch (error) {
+            console.log("Eroor while deleting asset from cloudinary: ", error)
+            return null
+        }
+    }
+
+export {uploadOnCloudinary, deleteFromCloudinary};
