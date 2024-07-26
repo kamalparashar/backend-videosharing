@@ -30,12 +30,12 @@ import fs from "fs"
     const deleteFromCloudinary = async(public_id) => {
         try {
             const response = await cloudinary.uploader.destroy(public_id, {
-                resource_type: "auto",
+                resource_type: "image",
                 invalidate: true
             })
             return response
         } catch (error) {
-            console.log("Eroor while deleting asset from cloudinary: ", error)
+            console.log("Error while deleting asset from cloudinary: ", error)
             return null
         }
     }

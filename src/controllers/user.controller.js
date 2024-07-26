@@ -10,10 +10,12 @@ import mongoose from "mongoose"
 const generateAccessAndRefreshToken = async (userId) => {
     try {
         const user = await User.findById(userId)
+
         const accessToken = user.genrateAccessToken() 
         const refreshToken = user.genrateRefreshToken()
-
+        
         user.refreshToken = refreshToken
+        
         await user.save({validateBeforeSave: false})
 
         return {accessToken, refreshToken}
@@ -90,7 +92,7 @@ const registerUser = asyncHandler(async (req,res) => {
 
     //checking for user creation
     if(!createdUser){
-        throw new ApiError(500, "Something went wrong while regestering user")
+        throw new ApiError(500, "Something went wrong while registering user")
     }
     //returning response
     return res.status(201).json(
@@ -154,9 +156,12 @@ const logoutUser = asyncHandler(async (req,res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined
+            $unset: {
+                refreshToken: 1//removes refresh token
             }
+        },
+        {
+            new: true
         }
     )
 
@@ -175,36 +180,36 @@ const logoutUser = asyncHandler(async (req,res) => {
 
 const refreshAccessToken = asyncHandler(async (req,res) => {
     const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+
     if(!incomingRefreshToken){
         throw new ApiError(401, "Unauthorized request")
     }
 
     try {
         const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+
         const user = await User.findById(decodedToken?._id)
         if(!user){
             throw new ApiError(401, "Invalid refreshToken")
         }
     
-        if(!(incomingRefreshToken===user.refreshToken)){
+        if((incomingRefreshToken !== user?.refreshToken)){
             throw new ApiError(401, "Refresh Token is expired or used")
         }
     
-        const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)
+        const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id)
     
         const options = {
-            http: true,
+            httpOnly: true,
             secure: true
         }
-    
+
         return res
         .status(200)
         .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", newRefreshToken, options)
+        .cookie("refreshToken", refreshToken, options)
         .json(
-            200,
-            {accessToken, refreshToken: newRefreshToken},
-            "Access Token Refreshed"
+            new ApiResponse(200, {accessToken, refreshToken}, "Access Token Refreshed")
         )
 
     } catch (error) {
@@ -269,9 +274,9 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     if(!avatar.url){
         throw new ApiError(400, "Error while updating avatar")
     }
-    const oldAvatar = await User.findById(req.user?._id).avatar?.split("/")
-    const oldAvatarPublicId = oldAvatar[oldAvatar.length - 1]?.split(".")[0]
-
+    const oldAvatar = await User.findById(req.user?._id)
+    const oldAvatarUrl = oldAvatar?.avatar.split("/")
+    const oldAvatarPublicId = oldAvatarUrl[oldAvatarUrl?.length - 1]?.split(".")[0]
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
@@ -306,6 +311,10 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Error while updating cover image")
     }
 
+    const oldCoverImage = await user.findById(req.user?._id)
+    const oldCoverImageUrl = oldCoverImage.coverImage?.split("/")
+    const oldCoverImagePublicId = oldCoverImageUrl[oldCoverImageUrl.length - 1].split(".")[0]
+
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
@@ -316,6 +325,13 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         {new: true}
     ).select("-password")
 
+    if(user){
+        const res = await deleteFromCloudinary(oldCoverImagePublicId)
+        if(!res){
+            throw new ApiError(500, "Error occurred while deleting old coverImage file")
+        }
+    }
+    
     return res
     .status(200)
     .json(
@@ -329,7 +345,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         throw new ApiError(400, "username is missing")
     }
 
-    const channel = await User.agrregate([
+    const channel = await User.aggregate([
         {
             $match: {
                 username: username?.toLowerCase()
@@ -346,7 +362,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         {
             $lookup: {
                 from: "subscriptions",
-                loacalField: "_id",
+                localField: "_id",
                 foreignField: "subscribers",
                 as: "subscribedTo"
             }
@@ -396,7 +412,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 const getWatchHistory = asyncHandler(async (req, res) => {
 // IMP. Note: req.user._id => returns string
 // mongoose handles it behind the scenes and create id for mongoDB
-
+    console.log(req.user._id);
     const user = await User.aggregate([
         {
             $match: {
@@ -438,7 +454,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
             }
         }
     ])
-    
+
     return res
     .status(200)
     .json(
