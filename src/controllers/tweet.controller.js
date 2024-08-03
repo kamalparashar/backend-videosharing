@@ -26,7 +26,7 @@ const createTweet = asyncHandler(async (req, res) => {
 })
 
 const getUserTweets = asyncHandler(async (req, res) => {
-    const userId = req.params
+    const {userId} = req.params
     const tweets = await Tweet.find({owner: userId})
 
     if(!tweets){
@@ -41,12 +41,12 @@ const getUserTweets = asyncHandler(async (req, res) => {
 })
 
 const deleteTweet = asyncHandler(async (req, res) => {
-    const tweetId = req.params
+    const {tweetId} = req.params
     if(!tweetId){
         throw new ApiError(400, "tweetId is required")
     }
 
-    const tweet = await Tweet.deleteOne({tweetId})
+    const tweet = await Tweet.deleteOne({_id: tweetId})
     if(!tweet){
         throw new ApiError(500, "Error occurred while deleting tweet")
     }
@@ -59,7 +59,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
 })
 
 const updateTweet = asyncHandler(async (req, res) => {
-    const tweetId = req.params
+    const {tweetId} = req.params
     const newContent = req.body.content
     if(!tweetId){
         throw new ApiError(400, "tweetId is required")

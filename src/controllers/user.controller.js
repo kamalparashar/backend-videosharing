@@ -412,7 +412,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 const getWatchHistory = asyncHandler(async (req, res) => {
 // IMP. Note: req.user._id => returns string
 // mongoose handles it behind the scenes and create id for mongoDB
-    console.log(req.user._id);
+    // console.log(req.user._id);
     const user = await User.aggregate([
         {
             $match: {

@@ -13,11 +13,11 @@ import fs from "fs"
             if(!localFilePath)  return null
             //upload file on cloudinary
             const response = await cloudinary.uploader.upload(localFilePath, {
-                resource_type: "auto"
+                resource_type: 'auto'
             })
-            console.log("cloudinary response after uploading image successfully",response);
+            // console.log("cloudinary response after uploading file successfully",response);
             fs.unlinkSync(localFilePath)
-            console.log("file uploaded successfully on cloudinary", response.url)
+            // console.log("file uploaded successfully on cloudinary", response.url)
             return response
         }
         catch(error) {
@@ -27,10 +27,10 @@ import fs from "fs"
        };
     }
 
-    const deleteFromCloudinary = async(public_id) => {
+    const deleteFromCloudinary = async(public_id, resource_type) => {
         try {
             const response = await cloudinary.uploader.destroy(public_id, {
-                resource_type: "image",
+                resource_type: resource_type,
                 invalidate: true
             })
             return response
