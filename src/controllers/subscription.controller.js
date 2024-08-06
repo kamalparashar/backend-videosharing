@@ -12,7 +12,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
        const response = await Subscription.deleteOne(sub._id)
 
        if(!response){
-            throw new ApiError(500, "Error occurred while  Unsubscription")
+            throw new ApiError(500, "Error occurred while Unsubscribing.")
        }
 
        return res
