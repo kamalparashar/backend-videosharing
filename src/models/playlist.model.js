@@ -7,7 +7,6 @@ const playlistSchema = new Schema({
     },
     description: {
         type: String,
-
     },
     owner: {
         type: Schema.Types.ObjectId,
@@ -20,3 +19,5 @@ const playlistSchema = new Schema({
         },
     ]
 },{timestamps: true})
+
+export const Playlist = mongoose.model("Playlist", playlistSchema)
